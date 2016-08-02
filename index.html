@@ -172,9 +172,19 @@
                     
                     //For the win!
                     if(score == brickRowCount*brickColumnCount){
-                        alert("You are a winner!");
                         clearInterval(running);
-                        document.location.reload();
+        		ctx.clearRect(0, 0, canvas.width, canvas.height);
+       
+			ctx.beginPath();
+        		var recta = ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
+        		ctx.fillStyle = "#0095DD";
+        		ctx.fill();
+        		ctx.closePath();
+       
+        		ctx.font = "30px Arial Black";
+        		ctx.fillStyle = "white";
+        		ctx.fillText("You win!", canvas.width/5 + 18, canvas.height/2 + 10);
+                        // document.location.reload();
                     }
                 }
             }
