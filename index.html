@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>It's Breakout Time</title>
+    <style>
+    	* { padding: 0; 
+    	    margin: 1;
+    	    -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+                 box-sizing: border-box;}
+                 
+                 
+/* ---1---THIS SECTION CENTERS THE GAME ON THE PAGE. DONT TOTALLY UNDERTSAND IT YET*/
+        /*.vertical-container {*/
+        /*  height: 5000;*/
+        /*  display: -webkit-flex;*/
+        /*  display:         flex;*/
+        /*  -webkit-align-items: center;*/
+        /*          align-items: center;*/
+        /*  -webkit-justify-content: center;*/
+        /*          justify-content: center;*/
+        /*}*/
+        
+        /*html, body {*/
+        /*    width: 100%;*/
+        /*    height: 100%;*/
+        /*    margin: 0;*/
+        /*    padding: 0;*/
+        /*    background-color: green;*/
+        /*}*/
+        
+        /*.container {*/
+        /*    width: 100%;*/
+        /*    height: 100%;*/
+        /*    margin: 0;*/
+        /*    padding: 0;*/
+        /*    background-color: pink;*/
+        /*}*/
+/* ---1---THIS SECTION CENTERS THE GAME ON THE PAGE. DONT TOTALLY UNDERTSAND IT YET*/
+         
+         h1 {
+             text-align: center;
+             font-family: Courier;
+             font-size: 3em;
+             font-weight: bolder;
+         }
+         
+    	/*#myCanvas {margin: 20px;}*/
+    	canvas { background: #eee; border: 3px solid black; border-radius: 5px; display: block; margin: 30px auto; }
+    </style>
+</head>
+<body>
+
+<div><h1>BreakOut</h1></div>
+<div><canvas id="myCanvas" width="480" height="320"></canvas></div>
+
+<script>
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	var x = Math.random()*canvas.width*0.9;   //for corner hit x=wid/5, y=hei-100,dx=3,dy=-2, row=1, col=1
+	var y = canvas.height-100;
+	var dxi = 3;
+	var dyi = -2;
+	var dx = dxi;
+	var dy = dyi;
+	var ballRadius = 10;
+	var paddleHeight = 30;
+	var paddleWidth = 75;
+	var paddleX = (canvas.width-paddleWidth)/2;
+	var paddleSpeed = 5;
+	var rightPressed = false;
+	var leftPressed = false;
+	var score = 0;
+	var lose = 0;
+	var slam = false;
+	
+	//BALLS:
+	var ballers = [];  //array contains each ball object
+	var ballCount = 0;
+	function Ball(color){
+	    this.color = color;
+	    this.radius = ballRadius;
+	    this.leftSide = x - this.radius;
+	    this.rightSide = x + this.radius;
+	    this.topSide = y - this.radius;
+	    this.bottomSide = y + this.radius;
+	    this.centerX = x;
+	    this.centerY = y;
+	}
+
+    //BRICKS:
+    var brickRowCount = 3;  //3
+    var brickColumnCount = 5;  //5
+    var brickWidth = 75;
+    var brickHeight = 20;
+    var brickPadding = 10;
+    var brickOffsetTop = 30;
+    var brickOffsetLeft = 30;
+    var bricks = [];
+    
+    for(c=0; c<brickColumnCount; c++){
+        bricks[c] = [];
+        for(r=0; r<brickRowCount; r++){
+            bricks[c][r] = {x:0, y:0, status: 1};
+        }
+    }
+
+
+
+    //START THE GAME:
+    var running;
+    function startGame() {
+        //drawing the board every 10 milliseconds
+        addBall();
+        running = setInterval(draw,10);
+    }
+    startGame();
+
+
+
+
+    function addBall() {
+        //add another ball to the array
+        ballers[ballers.length] = new Ball("#0095DD");
+    }
+
+    function drawBricks() {
+        for(c=0; c<brickColumnCount; c++){
+            for(r=0; r<brickRowCount; r++){
+                if(bricks[c][r].status == 1) {
+                    var brickX = (c*(brickWidth + brickPadding) + brickOffsetLeft);
+                    var brickY = (r*(brickHeight + brickPadding) + brickOffsetTop);
+                    bricks[c][r].x = brickX;
+                    bricks[c][r].y = brickY;
+                    
+                    ctx.beginPath();
+                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                    ctx.fillStyle = "#0095DD";
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }  
+    }
+
+	function drawBall() {
+		ctx.beginPath();
+		ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+		ctx.fillStyle = ballers[0].color;
+		ctx.fill();
+		ctx.closePath();
+	}
+
+	function drawPaddle() {
+		ctx.beginPath();
+		ctx.rect(paddleX, canvas.height - paddleHeight -1, paddleWidth, paddleHeight);
+		ctx.fillStyle = "#0095DD";
+		ctx.fill();
+		ctx.closePath();
+	}
+
+    function collisionDetection(){
+        for(c=0; c<brickColumnCount; c++){
+            for(r=0; r<brickRowCount; r++){
+                var b = bricks[c][r];
+                
+                if(b.status ==1 && x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                    dy=-dy;
+                    b.status = 0;
+                    score++;
+                    
+                    //For the win!
+                    if(score == brickRowCount*brickColumnCount){
+                        alert("You are a winner!");
+                        clearInterval(running);
+                        document.location.reload();
+                    }
+                }
+            }
+        }
+    }
+    
+    function drawScore(){
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText("Score: " + score, 8, 20);
+        
+    }
+
+   //reduces the speed of the ball if its been slammed
+    function reduceSpeed(){
+        if (slam){
+            if(Math.abs(dx) > Math.abs(dxi)){
+                dx *= 0.995;
+            }
+            else {
+                slam = false;
+                
+            }
+        }
+    }
+   
+   function gameOver(){
+        // alert("Sorry, you lose.");
+        clearInterval(running);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+       
+        ctx.beginPath();
+        var recta = ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+       
+        ctx.font = "30px Arial Black";
+        ctx.fillStyle = "white";
+        ctx.fillText("Sorry, you lose.", canvas.width/5 + 18, canvas.height/2 + 10);
+        
+        // recta.link("http://www.w3schools.com/cssref/css_websafe_fonts.asp");
+        //     // document.location.reload();    
+   }
+   
+	function draw(){
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		drawBricks();
+		drawBall();
+		reduceSpeed();
+		drawPaddle();
+		collisionDetection();
+		drawScore();
+
+// --------------------------- paddle movement --------------------------- // 
+        //RIGHT paddle movement
+        if(rightPressed && paddleX  < canvas.width - paddleWidth){
+            //if paddleX can move the full paddleSpeed
+            if(paddleX < (canvas.width - paddleWidth) - paddleSpeed){
+                paddleX += paddleSpeed;    
+            }
+            //if paddleX cannot move full paddleSpeed
+            else {
+                paddleX += (canvas.width - paddleWidth)-paddleX;
+            }
+        }
+        
+        //LEFT paddle movement
+        else if(leftPressed && paddleX > 0){
+            //if paddleX can move the full paddleSpeed
+            if(paddleX > paddleSpeed) {
+                paddleX += paddleSpeed;
+            }
+            //if paddleX cannot move full paddleSpeed
+            else {
+                paddleX += paddleX;
+            }
+        }
+
+
+// ----------------- Ball bouncing off the walls and paddle ----------------- //
+
+/****** Need to address situation when ball is moving left and hits left corner and visa versa******/
+
+		//locations for different parts of the ball on the next move
+		var nextMoveTop = y + dy - ballRadius;
+		var nextMoveBottom = y + dy + ballRadius;
+		var nextMoveLeft = x + dx - ballRadius;
+		var nextMoveRight = x + dx + ballRadius;
+		var nextMoveCenterX = x + dx;
+		var nextMoveCenterY = y + dy;
+        
+		//Side walls
+		if(nextMoveRight > canvas.width || nextMoveLeft < 0){
+			dx = -dx;
+		}
+		
+		//Top wall
+		if(nextMoveTop < 0){
+			dy = -dy;
+		} 
+		//Bottom wall: Miss paddle
+        else if(nextMoveBottom >= canvas.height /*&& x < paddleX || x > paddleX + paddleWidth*/) {
+                gameOver();
+        }
+        
+		//Paddle: top of paddle
+		if (nextMoveBottom >= canvas.height - paddleHeight && nextMoveCenterX >= paddleX && nextMoveCenterX <= paddleX + paddleWidth) {
+			dy=-dy;
+		}
+		
+		
+		
+		
+//Paddle moving OPPOSITE direction of the ball
+		if((rightPressed && dx < 0) || (leftPressed && dx > 0)){
+		    //Paddle: right side of the paddle
+            if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveLeft <= paddleX + paddleWidth && nextMoveCenterX > paddleX + paddleWidth){
+                x=paddleX + paddleWidth + ballRadius;
+                dx=-dx + paddleSpeed;
+                dy=-dy;
+                slam = true;
+            
+                // alert("x: " + x + " edge: " + (paddleX + paddleWidth + ballRadius) + " dx: " + dx + " dy: " + dy);
+                // clearInterval(running);
+                
+            } 
+            //Paddle: left side of paddle
+            else if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveRight >= paddleX && nextMoveCenterX < paddleX){
+                x=paddleX - ballRadius;
+                dx=-dx + paddleSpeed;
+                dy=-dy;
+                slam = true;
+            }
+		}
+		
+		
+//Paddle moving SAME direction of the ball
+        else if((rightPressed && dx > 0) || (leftPressed && dx < 0)){
+            //Paddle: right side of the paddle
+            if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveLeft <= paddleX + paddleWidth && nextMoveCenterX > paddleX + paddleWidth){
+                x=paddleX + paddleWidth + ballRadius;
+                dx=dx + paddleSpeed;
+                dy=-dy;
+                slam = true;
+                // alert("x: " + x + " edge: " + (paddleX + paddleWidth + ballRadius) + " dx: " + dx + " dy: " + dy);
+                // clearInterval(running);
+                
+            }
+        
+            //Paddle: left side of paddle
+            else if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveRight >= paddleX && nextMoveCenterX < paddleX){
+                x=paddleX - ballRadius;
+                dx=dx + paddleSpeed;
+                dy=-dy;
+                slam = true;
+                // alert("x: " + x + " edge: " + (paddleX) + " dx: " + dx + " dy: " + dy);
+                // clearInterval(running);
+            }
+        }
+		
+		
+		
+//Paddle NOT moving
+		else {
+    		//Paddle: right side of the paddle
+    		if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveLeft <= paddleX + paddleWidth && nextMoveCenterX > paddleX + paddleWidth){
+    	        if(dx<0){
+                    dx=-dx;
+                    dy=-dy;
+                }
+                else
+                    dy=-dy;
+    		} 
+    		//Paddle: left side of paddle
+    		else if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveRight >= paddleX && nextMoveCenterX < paddleX){
+    		    if(dx>0){
+    		        dx=-dx;
+                    dy=-dy;
+    		    }
+    		    else {
+    		        dy=-dy;
+    		        alert("2");   
+    		    }
+    		}
+		}
+		
+		
+// ------------ sets the next x and y position for the ball ------------ // 
+		x+=dx;
+		y+=dy;
+
+
+	}
+	
+	//listens for and defines what to with keystroke events
+	document.addEventListener("keydown", keyDownHandler, false);
+	document.addEventListener("keyup", keyUpHandler, false);
+
+	function keyDownHandler(e) {
+		if(e.keyCode == 39) {
+			rightPressed = true;
+			paddleSpeed = Math.abs(paddleSpeed);
+		} 
+		else if(e.keyCode == 37) {
+			leftPressed = true;
+			paddleSpeed = -Math.abs(paddleSpeed);
+		}
+	}
+
+	function keyUpHandler(e) {
+		if(e.keyCode == 39) {
+			rightPressed = false;
+		} 
+		else if(e.keyCode == 37) {
+			leftPressed = false;
+		}
+	}
+
+	
+
+
+	
+
+
+</script>
+
+</body>
+</html>
