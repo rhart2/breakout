@@ -81,12 +81,28 @@
     function Ball(color){
         this.color = color;
         this.radius = ballRadius;
-        this.leftSide = x - this.radius;
-        this.rightSide = x + this.radius;
-        this.topSide = y - this.radius;
-        this.bottomSide = y + this.radius;
         this.centerX = x;
         this.centerY = y;
+        this.leftSide = this.centerX - this.radius;
+        this.rightSide = this.centerX + this.radius;
+        this.topSide = this.centerY - this.radius;
+        this.bottomSide = this.centerY + this.radius;
+        this.nextMoveTop = this.centerY + dy - this.radius;
+        this.nextMoveBottom = this.centerY + dy + this.radius;
+        this.nextMoveLeft = this.centerX + dx - this.radius;
+        this.nextMoveRight = this.centerX + dx + this.radius;
+        this.nextMoveCenterX = this.centerX + dx;
+        this.nextMoveCenterY = this.centerY + dy;
+    
+        this.updatePositions = function(dx,dy) {
+            this.centerX += dx;
+            this.centerY += dy;
+            this.leftSide = this.centerX - this.radius;
+            this.rightSide = this.centerX + this.radius;
+            this.topSide = this.centerY - this.radius;
+            this.bottomSide = this.centerY + this.radius;
+        };
+        
     }
 
     //BRICKS:
@@ -125,6 +141,7 @@
         ballers[ballers.length] = new Ball("#0095DD");
     }
 
+
     function drawBricks() {
         for(c=0; c<brickColumnCount; c++){
             for(r=0; r<brickRowCount; r++){
@@ -146,7 +163,7 @@
 
     function drawBall() {
         ctx.beginPath();
-        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.arc(ballers[0].centerX, ballers[0].centerY, ballers[0].radius, 0, Math.PI*2);
         ctx.fillStyle = ballers[0].color;
         ctx.fill();
         ctx.closePath();
@@ -165,7 +182,7 @@
             for(r=0; r<brickRowCount; r++){
                 var b = bricks[c][r];
                 
-                if(b.status ==1 && x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                if(b.status ==1 && ballers[0].centerX > b.x && ballers[0].centerX < b.x + brickWidth && ballers[0].centerY > b.y && ballers[0].centerY < b.y + brickHeight) {
                     dy=-dy;
                     b.status = 0;
                     score++;
@@ -173,17 +190,17 @@
                     //For the win!
                     if(score == brickRowCount*brickColumnCount){
                         clearInterval(running);
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-       
-            ctx.beginPath();
-                var recta = ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
-                ctx.fillStyle = "#0095DD";
-                ctx.fill();
-                ctx.closePath();
-       
-                ctx.font = "45px Arial Black";
-                ctx.fillStyle = "white";
-                ctx.fillText("YOU WIN.", canvas.width/5 + 25, canvas.height/2 + 15);
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+               
+                        ctx.beginPath();
+                        ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
+                        ctx.fillStyle = "#0095DD";
+                        ctx.fill();
+                        ctx.closePath();
+               
+                        ctx.font = "45px Arial Black";
+                        ctx.fillStyle = "white";
+                        ctx.fillText("YOU WIN.", canvas.width/5 + 25, canvas.height/2 + 15);
                         // document.location.reload();
                     }
                 }
@@ -217,7 +234,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
        
         ctx.beginPath();
-        var recta = ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
+        ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
         ctx.fillStyle = "#0095DD";
         ctx.fill();
         ctx.closePath();
@@ -270,29 +287,31 @@
 /****** Need to address situation when ball is moving left and hits left corner and visa versa******/
 
         //locations for different parts of the ball on the next move
-        var nextMoveTop = y + dy - ballRadius;
-        var nextMoveBottom = y + dy + ballRadius;
-        var nextMoveLeft = x + dx - ballRadius;
-        var nextMoveRight = x + dx + ballRadius;
-        var nextMoveCenterX = x + dx;
-        var nextMoveCenterY = y + dy;
+        ballers[0].nextMoveTop = ballers[0].topSide + dy;
+        ballers[0].nextMoveBottom = ballers[0].bottomSide + dy;
+        ballers[0].nextMoveLeft = ballers[0].leftSide + dx;
+        ballers[0].nextMoveRight = ballers[0].rightSide + dx;
+        ballers[0].nextMoveCenterX = ballers[0].centerX + dx;
+        ballers[0].nextMoveCenterY = ballers[0].centerY + dy;
         
+        
+        alert(ballers[0].nextMoveRight + " " + canvas.width);
         //Side walls
-        if(nextMoveRight > canvas.width || nextMoveLeft < 0){
+        if(ballers[0].nextMoveRight > canvas.width || ballers[0].nextMoveLeft < 0){
             dx = -dx;
         }
         
         //Top wall
-        if(nextMoveTop < 0){
+        if(ballers[0].nextMoveTop < 0){
             dy = -dy;
         } 
         //Bottom wall: Miss paddle
-        else if(nextMoveBottom >= canvas.height /*&& x < paddleX || x > paddleX + paddleWidth*/) {
+        else if(ballers[0].nextMoveBottom >= canvas.height /*&& x < paddleX || x > paddleX + paddleWidth*/) {
                 gameOver();
         }
         
         //Paddle: top of paddle
-        if (nextMoveBottom >= canvas.height - paddleHeight && nextMoveCenterX >= paddleX && nextMoveCenterX <= paddleX + paddleWidth) {
+        if (ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveCenterX >= paddleX && ballers[0].nextMoveCenterX <= paddleX + paddleWidth) {
             dy=-dy;
         }
         
@@ -302,8 +321,8 @@
 //Paddle moving OPPOSITE direction of the ball
         if((rightPressed && dx < 0) || (leftPressed && dx > 0)){
             //Paddle: right side of the paddle
-            if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveLeft <= paddleX + paddleWidth && nextMoveCenterX > paddleX + paddleWidth){
-                x=paddleX + paddleWidth + ballRadius;
+            if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveLeft <= paddleX + paddleWidth && ballers[0].nextMoveCenterX > paddleX + paddleWidth){
+                ballers[0].centerX=paddleX + paddleWidth + ballers[0].radius;   //SGALL I CHANGE THIS TO ballers[0].leftSide??
                 dx=-dx + paddleSpeed;
                 dy=-dy;
                 slam = true;
@@ -313,8 +332,8 @@
                 
             } 
             //Paddle: left side of paddle
-            else if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveRight >= paddleX && nextMoveCenterX < paddleX){
-                x=paddleX - ballRadius;
+            else if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveRight >= paddleX && ballers[0].nextMoveCenterX < paddleX){
+                ballers[0].centerX=paddleX - ballRadius;
                 dx=-dx + paddleSpeed;
                 dy=-dy;
                 slam = true;
@@ -325,8 +344,8 @@
 //Paddle moving SAME direction of the ball
         else if((rightPressed && dx > 0) || (leftPressed && dx < 0)){
             //Paddle: right side of the paddle
-            if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveLeft <= paddleX + paddleWidth && nextMoveCenterX > paddleX + paddleWidth){
-                x=paddleX + paddleWidth + ballRadius;
+            if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveLeft <= paddleX + paddleWidth && ballers[0].nextMoveCenterX > paddleX + paddleWidth){
+                ballers[0].centerX=paddleX + paddleWidth + ballers[0].radius;
                 dx=dx + paddleSpeed;
                 dy=-dy;
                 slam = true;
@@ -336,8 +355,8 @@
             }
         
             //Paddle: left side of paddle
-            else if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveRight >= paddleX && nextMoveCenterX < paddleX){
-                x=paddleX - ballRadius;
+            else if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveRight >= paddleX && ballers[0].nextMoveCenterX < paddleX){
+                ballers[0].centerX=paddleX - ballRadius;
                 dx=dx + paddleSpeed;
                 dy=-dy;
                 slam = true;
@@ -351,7 +370,7 @@
 //Paddle NOT moving
         else {
             //Paddle: right side of the paddle
-            if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveLeft <= paddleX + paddleWidth && nextMoveCenterX > paddleX + paddleWidth){
+            if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveLeft <= paddleX + paddleWidth && ballers[0].nextMoveCenterX > paddleX + paddleWidth){
                 if(dx<0){
                     dx=-dx;
                     dy=-dy;
@@ -360,22 +379,23 @@
                     dy=-dy;
             } 
             //Paddle: left side of paddle
-            else if(nextMoveBottom >= canvas.height - paddleHeight && nextMoveRight >= paddleX && nextMoveCenterX < paddleX){
+            else if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveRight >= paddleX && ballers[0].nextMoveCenterX < paddleX){
                 if(dx>0){
                     dx=-dx;
                     dy=-dy;
                 }
                 else {
                     dy=-dy;
-                    alert("2");   
+                    // alert("2");   
                 }
             }
         }
         
         
 // ------------ sets the next x and y position for the ball ------------ // 
-        x+=dx;
-        y+=dy;
+        // ballers[0].centerX += dx;
+        // ballers[0].centerY += dy;
+        ballers[0].updatePositions(dx,dy);
 
 
     }
