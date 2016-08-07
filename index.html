@@ -4,127 +4,525 @@
     <meta charset="utf-8" />
     <title>It's Breakout Time</title>
     <style>
-    	* { padding: 0; margin: 0; }
-    	canvas { background: #eee; display: block; margin: 0 auto; }
+        * { padding: 0; 
+            margin: 1;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+                 box-sizing: border-box;}
+                 
+                 
+/* ---1---THIS SECTION CENTERS THE GAME ON THE PAGE. DONT TOTALLY UNDERTSAND IT YET*/
+        /*.vertical-container {*/
+        /*  height: 5000;*/
+        /*  display: -webkit-flex;*/
+        /*  display:         flex;*/
+        /*  -webkit-align-items: center;*/
+        /*          align-items: center;*/
+        /*  -webkit-justify-content: center;*/
+        /*          justify-content: center;*/
+        /*}*/
+        
+        /*html, body {*/
+        /*    width: 100%;*/
+        /*    height: 100%;*/
+        /*    margin: 0;*/
+        /*    padding: 0;*/
+        /*    background-color: green;*/
+        /*}*/
+        
+        /*.container {*/
+        /*    width: 100%;*/
+        /*    height: 100%;*/
+        /*    margin: 0;*/
+        /*    padding: 0;*/
+        /*    background-color: pink;*/
+        /*}*/
+/* ---1---THIS SECTION CENTERS THE GAME ON THE PAGE. DONT TOTALLY UNDERTSAND IT YET*/
+         
+         h1 {
+             text-align: center;
+             font-family: Courier;
+             font-size: 3em;
+             font-weight: bolder;
+         }
+
+        #canvasFrame {
+            width:480px;
+            height:320px;
+            display: block; 
+            margin: 30px auto;
+            background-color: #0095DD;
+        }
+         
+        #myCanvas { 
+            background: #eee; 
+            border: 3px solid black; 
+            border-radius: 5px; 
+            display: block; 
+            margin: 30px auto; 
+        }
+
+        #youLose{
+            font-family: Arial Black;
+            font-size: 2.25em;
+            color: white;
+            background-color: #0095DD;
+            border-radius: 5px; 
+            /*padding: 15px 10px 15px 10px;*/
+            margin: 0px 70px;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 100px;
+            top:-245px;
+            left:3px;
+            position: relative;
+            display: none;
+         }
+
+         #youWin{
+            font-family: Arial Black;
+            font-size: 2.25em;
+            color: white;
+            background-color: #0095DD;
+            border-radius: 5px; 
+            /*padding: 15px 10px 15px 10px;*/
+            margin: 0px 110px;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 100px;
+            top:-245px;
+            left:3px;
+            position: relative;
+            display: none;
+         }
+         
+        
+
+        
     </style>
 </head>
 <body>
 
-<canvas id="myCanvas" width="480" height="320"></canvas>
+<div><h1>BreakOut</h1></div>
+<div id="canvasFrame"><canvas id="myCanvas" width="480" height="320"></canvas>
+    <div id="youLose">Sorry, you lose.</div>
+    <div id="youWin">YOU WIN.</div>
+
+</div>
+
 
 <script>
-	var canvas = document.getElementById("myCanvas");
-	var ctx = canvas.getContext("2d");
-	var x = canvas.width/2;
-	var y = canvas.height-50;
-	var dx = 3;
-	var dy = -2;
-	var ballRadius = 10;
-	var paddleHeight = 10;
-	var paddleWidth = 75;
-	var paddleX = (canvas.width-paddleWidth)/2;
-	var paddleSpeed = 7;
-	var rightPressed = false;
-	var leftPressed = false;
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    var x = Math.random()*canvas.width*0.9;   //for corner hit x=wid/5, y=hei-100,dx=3,dy=-2, row=1, col=1
+    var y = canvas.height-100;
+    var dxi = 3;
+    var dyi = -2;
+    var dx = dxi;
+    var dy = dyi;
+    var ballRadius = 10;
+    var paddleHeight = 30;
+    var paddleWidth = 75;
+    var paddleX = (canvas.width-paddleWidth)/2;
+    var paddleSpeed = 5;
+    var rightPressed = false;
+    var leftPressed = false;
+    var score = 0;
+    var lose = 0;
+    var slam = 0;
+    
+    //BALLS:
+    var ballers = [];  //array contains each ball object
+    var ballCount = 0;
+    function Ball(color){
+        this.color = color;
+        this.radius = ballRadius;
+        this.centerX = x;
+        this.centerY = y;
+        this.leftSide = this.centerX - this.radius;
+        this.rightSide = this.centerX + this.radius;
+        this.topSide = this.centerY - this.radius;
+        this.bottomSide = this.centerY + this.radius;
+        this.nextMoveTop = this.centerY + dy - this.radius;
+        this.nextMoveBottom = this.centerY + dy + this.radius;
+        this.nextMoveLeft = this.centerX + dx - this.radius;
+        this.nextMoveRight = this.centerX + dx + this.radius;
+        this.nextMoveCenterX = this.centerX + dx;
+        this.nextMoveCenterY = this.centerY + dy;
+    
+        this.updatePositions = function(dx,dy) {
+            this.centerX += dx;
+            this.centerY += dy;
+            this.leftSide = this.centerX - this.radius;
+            this.rightSide = this.centerX + this.radius;
+            this.topSide = this.centerY - this.radius;
+            this.bottomSide = this.centerY + this.radius;
+        };
 
-	function drawBall() {
-		ctx.beginPath();
-		ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-		ctx.fillStyle = "#0095DD";
-		ctx.fill();
-		ctx.closePath();
+        // this.bImage = new Image();
+        // this.bImage.src = 'img/soccer.png';
+        // this.bImage.onload = function(){ctx.drawImage(this.bImage,this.centerX,this.centerY);}
 
-	};
+        
+    }
 
-	function drawPaddle() {
-		ctx.beginPath();
-		ctx.rect(paddleX, canvas.height - paddleHeight -2, paddleWidth, paddleHeight);
-		ctx.fillStyle = "#0095DD";
-		ctx.fill();
-		ctx.closePath();
-	};
-
-	function draw(){
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		drawBall();
-		drawPaddle();
-
-		//Code for ball bouncing off the walls
-		if(x + dx + ballRadius > canvas.width || x + dx - ballRadius < 0){
-			dx = -dx;
-		};
-		
-		//Top wall
-		if(y + dy - ballRadius < 0){
-			dy = -dy;
-		} 
-		//Bottom wall
-		else if (y + dy + ballRadius > canvas.height - paddleHeight && x > paddleX && x < paddleX + paddleWidth) {
-			dy=-dy;
-		}
-		else if(y + dy + ballRadius > canvas.height /*&& x < paddleX || x > paddleX + paddleWidth*/) {
-				alert("GAME OVER");
-				document.location.reload();
-		}
-		
-
-		x+=dx;
-		y+=dy;
-
-		//RIGHT paddle movement
-		if(rightPressed && paddleX  < canvas.width - paddleWidth){
-			//if paddleX can move the full paddleSpeed
-			if(paddleX < (canvas.width - paddleWidth) - paddleSpeed){
-				paddleX += paddleSpeed;	
-			}
-			//if paddleX cannot move full paddleSpeed
-			else {
-				paddleX += (canvas.width - paddleWidth)-paddleX;
-			}
-		}
-
-		//LEFT paddle movement
-		else if(leftPressed && paddleX > 0){
-			//if paddleX can move the full paddleSpeed
-			if(paddleX > paddleSpeed) {
-				paddleX -= paddleSpeed;
-			}
-			//if paddleX cannot move full paddleSpeed
-			else {
-				paddleX -= paddleX;
-			}
-		};
-		
-	};
-	
-	//listens for and defines what to with keystroke events
-
-	document.addEventListener("keydown", keyDownHandler, false);
-	document.addEventListener("keyup", keyUpHandler, false);
-
-	function keyDownHandler(e) {
-		if(e.keyCode == 39) {
-			rightPressed = true;
-		} 
-		else if(e.keyCode == 37) {
-			leftPressed = true;
-		}
-	};
-
-	function keyUpHandler(e) {
-		if(e.keyCode == 39) {
-			rightPressed = false;
-		} 
-		else if(e.keyCode == 37) {
-			leftPressed = false;
-		}
-	};
-
-	
+    //BRICKS:
+    var brickRowCount = 1;  //3
+    var brickColumnCount = 1;  //5
+    var brickWidth = 75;
+    var brickHeight = 20;
+    var brickPadding = 10;
+    var brickOffsetTop = 30;
+    var brickOffsetLeft = 30;
+    var bricks = [];
+    
+    for(c=0; c<brickColumnCount; c++){
+        bricks[c] = [];
+        for(r=0; r<brickRowCount; r++){
+            bricks[c][r] = {x:0, y:0, status: 1};
+        }
+    }
 
 
-	//drawing the board every 10 milliseconds
-	setInterval(draw,10);
+
+    //START THE GAME:
+    var running;
+    function startGame() {
+        //drawing the board every 10 milliseconds
+        addBall();
+        running = setInterval(draw,10);
+    }
+    startGame();
+
+
+
+
+    function addBall() {
+        //add another ball to the array
+        ballers[ballers.length] = new Ball("#0095DD");
+    }
+
+
+    function drawBricks() {
+        for(c=0; c<brickColumnCount; c++){
+            for(r=0; r<brickRowCount; r++){
+                if(bricks[c][r].status == 1) {
+                    var brickX = (c*(brickWidth + brickPadding) + brickOffsetLeft);
+                    var brickY = (r*(brickHeight + brickPadding) + brickOffsetTop);
+                    bricks[c][r].x = brickX;
+                    bricks[c][r].y = brickY;
+                    
+                    ctx.beginPath();
+                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                    ctx.fillStyle = "#0095DD";
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }  
+    }
+
+    function drawBall() {
+        ctx.beginPath();
+        ctx.arc(ballers[0].centerX, ballers[0].centerY, ballers[0].radius, 0, Math.PI*2);
+        ctx.fillStyle = ballers[0].color;
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawPaddle() {
+        ctx.beginPath();
+        ctx.rect(paddleX, canvas.height - paddleHeight -1, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function collisionDetection(){
+        for(c=0; c<brickColumnCount; c++){
+            for(r=0; r<brickRowCount; r++){
+                var b = bricks[c][r];
+                
+                if(b.status ==1 && ballers[0].centerX > b.x && ballers[0].centerX < b.x + brickWidth && ballers[0].centerY > b.y && ballers[0].centerY < b.y + brickHeight) {
+                    dy=-dy;
+                    b.status = 0;
+                    score++;
+                    
+                    //For the win!
+                    if(score == brickRowCount*brickColumnCount){
+                        clearInterval(running);
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+               
+                        // ctx.beginPath();
+                        // ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
+                        // ctx.fillStyle = "#0095DD";
+                        // ctx.fill();
+                        // ctx.closePath();
+               
+                        // ctx.font = "45px Arial Black";
+                        // ctx.fillStyle = "white";
+                        // ctx.fillText("YOU WIN.", canvas.width/5 + 25, canvas.height/2 + 15);
+                        document.getElementById("youWin").style.display = "block";
+                        // document.location.reload();
+                    }
+                }
+            }
+        }
+    }
+    
+    function drawScore(){
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText("Score: " + score, 8, 20);
+        
+    }
+
+   //reduces the speed of the ball if its been slammed
+        var r = 102;
+        var g = 204;
+        var b = 255;
+        function reduceSpeed(){
+            if (slam>0){
+                if(slam>1){
+                    r = r + 102;
+                    g = g + (204-149);
+                    b = b + (255-221);
+                    slam-=1;
+                }
+            // alert(r + " " + g + " " + b);
+                if(Math.abs(dx) > Math.abs(dxi)){
+                    dx *= 0.995;  //this causes it to cycle through 196 times
+                    ballers[0].color=redgb(Math.round(r),Math.round(g),Math.round(b));
+                    
+                    r= r - (102/196);
+                    g= g - ((204-149)/196);
+                    b= b - ((255-221)/196);
+                    
+                    // rgb(0, 149, 221)
+                    // hsl(200, 100%, 43%)
+                    
+                    // rgb(102, 204, 255)
+                    // hsl(200, 100%, 70%)
+                }
+                else {
+                    slam = 0;
+                    r = 102;
+                    g = 204;
+                    b = 255;
+                    ballers[0].color="#0095DD";
+                }
+            }
+        }
+   
+    function redgb(r, g, b){
+        // alert( "rgb("+r+","+g+","+b+")");
+        return "rgb("+r+","+g+","+b+")";
+    }
+   
+   function gameOver(){
+        // alert("Sorry, you lose.");
+        clearInterval(running);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    //YOU LOSE WITH CANVAS DRAW//
+        // ctx.beginPath();
+        // ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
+        // ctx.fillStyle = "#0095DD";
+        // ctx.fill();
+        // ctx.closePath();
+       
+        // ctx.font = "30px Arial Black";
+        // ctx.fillStyle = "white";
+        // ctx.fillText("Sorry, you lose.", canvas.width/5 + 18, canvas.height/2 + 10);
+
+    //YOU LOSE WITH HTML ELEMENT//
+        // document.getElementById("youLose").style.position = "relative";
+        // document.getElementById("youLose").style.left = "114px";
+        // document.getElementById("youLose").style.top = "0px";
+        document.getElementById("youLose").style.display = "block";
+
+   }
+   
+    function draw(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBricks();
+        drawBall();
+        reduceSpeed();
+        drawPaddle();
+        collisionDetection();
+        drawScore();
+
+// --------------------------- paddle movement --------------------------- // 
+        //RIGHT paddle movement
+        if(rightPressed && paddleX  < canvas.width - paddleWidth){
+            //if paddleX can move the full paddleSpeed
+            if(paddleX < (canvas.width - paddleWidth) - paddleSpeed){
+                paddleX += paddleSpeed;    
+            }
+            //if paddleX cannot move full paddleSpeed
+            else {
+                paddleX += (canvas.width - paddleWidth)-paddleX;
+            }
+        }
+        
+        //LEFT paddle movement
+        else if(leftPressed && paddleX > 0){
+            //if paddleX can move the full paddleSpeed
+            if(paddleX > paddleSpeed) {
+                paddleX += paddleSpeed;
+            }
+            //if paddleX cannot move full paddleSpeed
+            else {
+                paddleX += paddleX;
+            }
+        }
+
+
+// ----------------- Ball bouncing off the walls and paddle ----------------- //
+
+/****** Need to address situation when ball is moving left and hits left corner and visa versa******/
+
+        //locations for different parts of the ball on the next move
+        ballers[0].nextMoveTop = ballers[0].topSide + dy;
+        ballers[0].nextMoveBottom = ballers[0].bottomSide + dy;
+        ballers[0].nextMoveLeft = ballers[0].leftSide + dx;
+        ballers[0].nextMoveRight = ballers[0].rightSide + dx;
+        ballers[0].nextMoveCenterX = ballers[0].centerX + dx;
+        ballers[0].nextMoveCenterY = ballers[0].centerY + dy;
+        
+        
+        //Side walls
+        if(ballers[0].nextMoveRight > canvas.width || ballers[0].nextMoveLeft < 0){
+            dx = -dx;
+        }
+        
+        //Top wall
+        if(ballers[0].nextMoveTop < 0){
+            dy = -dy;
+        } 
+        //Bottom wall: Miss paddle
+        else if(ballers[0].nextMoveBottom >= canvas.height /*&& x < paddleX || x > paddleX + paddleWidth*/) {
+                gameOver();
+        }
+        
+        //Paddle: top of paddle
+        if (ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveCenterX >= paddleX && ballers[0].nextMoveCenterX <= paddleX + paddleWidth) {
+            dy=-dy;
+        }
+        
+        
+        
+        
+//Paddle moving OPPOSITE direction of the ball
+        if((rightPressed && dx < 0) || (leftPressed && dx > 0)){
+            //Paddle: right side of the paddle
+            if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveLeft <= paddleX + paddleWidth && ballers[0].nextMoveCenterX > paddleX + paddleWidth){
+                ballers[0].centerX=paddleX + paddleWidth + ballers[0].radius;   //SGALL I CHANGE THIS TO ballers[0].leftSide??
+                dx=-dx + paddleSpeed;
+                dy=-dy;
+                slam = slam + 1;
+            
+                // alert("x: " + x + " edge: " + (paddleX + paddleWidth + ballRadius) + " dx: " + dx + " dy: " + dy);
+                // clearInterval(running);
+                
+            } 
+            //Paddle: left side of paddle
+            else if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveRight >= paddleX && ballers[0].nextMoveCenterX < paddleX){
+                ballers[0].centerX=paddleX - ballRadius;
+                dx=-dx + paddleSpeed;
+                dy=-dy;
+                slam = slam + 1;
+            }
+        }
+        
+        
+//Paddle moving SAME direction of the ball
+        else if((rightPressed && dx > 0) || (leftPressed && dx < 0)){
+            //Paddle: right side of the paddle
+            if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveLeft <= paddleX + paddleWidth && ballers[0].nextMoveCenterX > paddleX + paddleWidth){
+                ballers[0].centerX=paddleX + paddleWidth + ballers[0].radius;
+                dx=dx + paddleSpeed;
+                dy=-dy;
+                slam = slam + 1;
+                // alert("x: " + x + " edge: " + (paddleX + paddleWidth + ballRadius) + " dx: " + dx + " dy: " + dy);
+                // clearInterval(running);
+                
+            }
+        
+            //Paddle: left side of paddle
+            else if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveRight >= paddleX && ballers[0].nextMoveCenterX < paddleX){
+                ballers[0].centerX=paddleX - ballRadius;
+                dx=dx + paddleSpeed;
+                dy=-dy;
+                slam = slam + 1;
+                // alert("x: " + x + " edge: " + (paddleX) + " dx: " + dx + " dy: " + dy);
+                // clearInterval(running);
+            }
+        }
+        
+        
+        
+//Paddle NOT moving
+        else {
+            //Paddle: right side of the paddle
+            if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveLeft <= paddleX + paddleWidth && ballers[0].nextMoveCenterX > paddleX + paddleWidth){
+                if(dx<0){
+                    dx=-dx;
+                    dy=-dy;
+                }
+                else
+                    dy=-dy;
+            } 
+            //Paddle: left side of paddle
+            else if(ballers[0].nextMoveBottom >= canvas.height - paddleHeight && ballers[0].nextMoveRight >= paddleX && ballers[0].nextMoveCenterX < paddleX){
+                if(dx>0){
+                    dx=-dx;
+                    dy=-dy;
+                }
+                else {
+                    dy=-dy;
+                    // alert("2");   
+                }
+            }
+        }
+        
+        
+// ------------ sets the next x and y position for the ball ------------ // 
+        // ballers[0].centerX += dx;
+        // ballers[0].centerY += dy;
+        ballers[0].updatePositions(dx,dy);
+
+
+    }
+    
+    //listens for and defines what to with keystroke events
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+
+    function keyDownHandler(e) {
+        if(e.keyCode == 39) {
+            rightPressed = true;
+            paddleSpeed = Math.abs(paddleSpeed);
+        } 
+        else if(e.keyCode == 37) {
+            leftPressed = true;
+            paddleSpeed = -Math.abs(paddleSpeed);
+        }
+    }
+
+    function keyUpHandler(e) {
+        if(e.keyCode == 39) {
+            rightPressed = false;
+        } 
+        else if(e.keyCode == 37) {
+            leftPressed = false;
+        }
+    }
+
+    
+
+
+    
 
 
 </script>
