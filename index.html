@@ -60,6 +60,25 @@
             margin: 10px;
             text-align:center;
         }
+        
+        /*I can add a class for the next three setting most of the properties*/
+        
+        #ready { 
+            font-family: Arial Black;
+            font-size: 2.25em;
+            color: white;
+            background-color: #0095DD;
+            border-radius: 5px; 
+            /*padding: 15px 10px 15px 10px;*/
+            margin: 0px 70px;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 100px;
+            top:-245px;
+            left:3px;
+            position: relative;
+            display: none;
+        }
 
         #youLose{
             font-family: Arial Black;
@@ -109,6 +128,7 @@
 
 
 <div id="canvasFrame"><canvas id="myCanvas" width="480" height="320" style="display:none"></canvas>
+    <div id="ready">Ready?</div>
     <div id="youLose">Sorry, you lose.</div>
     <div id="youWin">YOU WIN.</div>
 </div>
@@ -131,6 +151,7 @@
     var lose = 0;
     var slam = 0;
     var start = false;
+    var ready = false;
     //Standard blue: 0,149,221
     
 //PADDLE #####################################################################
@@ -203,17 +224,12 @@
         $(document).ready(function(){
             // $("#fullFrame").fadeTo(1000,0.4);
         //   alert("yallo");
-            for(i=1;i<43;i++){
-                
-                $("#fullFrame").append("<div id='openingBricks' style='margin:5px 5px'></div>");   
-            }
+            for(i=1;i<43;i++) { $("#fullFrame").append("<div id='openingBricks' style='margin:5px 5px'></div>"); }
             
             $("#fullFrame").append("<div><p id='clickPlay'>Press Spacebar to Play</p></div>");
             
-            for(i=1;i<43;i++){
-                
-                $("#fullFrame").append("<div id='openingBricks' style='margin:5px 5px'></div>");   
-            }
+            for(i=1;i<43;i++) { $("#fullFrame").append("<div id='openingBricks' style='margin:5px 5px'></div>"); }
+            
             
             $(document).keydown(function(key){
                 if((key.keyCode === 0 || key.keyCode === 32) && start === false){
@@ -221,14 +237,15 @@
                     $("#fullFrame").fadeOut("slow");
                     $("#myCanvas").delay("slow").fadeIn("slow");
                     $("#title").delay("slow").fadeIn("slow");
-                  
-                }
-            })
-            
-            $(document).keyup(function(key){
-                if((key.keyCode === 0 || key.keyCode === 32) && start === false){
-                    setTimeout(startGame(), 10000);
+                    $("#ready").delay("slow").fadeIn("slow");
+                    
                     start = true;
+                }
+                else if((key.keyCode === 0 || key.keyCode === 32) && start === true){
+                    //SHOW THE Ready? screen
+                    $("#ready").fadeOut("fast");
+                    setTimeout(startGame(), 10000);   
+                    
                 }
             })
         
