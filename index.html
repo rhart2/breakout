@@ -9,36 +9,7 @@
             -webkit-box-sizing: border-box;
             -moz-box-sizing: border-box;
                  box-sizing: border-box;}
-                 
-                 
-/* ---1---THIS SECTION CENTERS THE GAME ON THE PAGE. DONT TOTALLY UNDERTSAND IT YET*/
-        /*.vertical-container {*/
-        /*  height: 5000;*/
-        /*  display: -webkit-flex;*/
-        /*  display:         flex;*/
-        /*  -webkit-align-items: center;*/
-        /*          align-items: center;*/
-        /*  -webkit-justify-content: center;*/
-        /*          justify-content: center;*/
-        /*}*/
-        
-        /*html, body {*/
-        /*    width: 100%;*/
-        /*    height: 100%;*/
-        /*    margin: 0;*/
-        /*    padding: 0;*/
-        /*    background-color: green;*/
-        /*}*/
-        
-        /*.container {*/
-        /*    width: 100%;*/
-        /*    height: 100%;*/
-        /*    margin: 0;*/
-        /*    padding: 0;*/
-        /*    background-color: pink;*/
-        /*}*/
-/* ---1---THIS SECTION CENTERS THE GAME ON THE PAGE. DONT TOTALLY UNDERTSAND IT YET*/
-         
+
          h1 {
              text-align: center;
              font-family: Courier;
@@ -46,12 +17,20 @@
              font-weight: bolder;
          }
 
+        #fullFrame {
+            width:830px;
+            height:200px;
+            display: block;
+            margin: 10px auto;
+            /*background-color:blue;*/
+        }
+
         #canvasFrame {
             width:480px;
             height:320px;
             display: block; 
             margin: 30px auto;
-            background-color: #0095DD;
+            background-color: none;
         }
          
         #myCanvas { 
@@ -60,6 +39,26 @@
             border-radius: 5px; 
             display: block; 
             margin: 30px auto; 
+        }
+
+        #openingBricks {
+            content:url("img/brickBlue.png");
+            position:relative;
+            display:inline;
+            /*top:0;*/
+            /*left:30;*/
+            /*padding:200;*/
+            /*margin:200;*/
+        }
+
+        #clickPlay {
+            /*content:"Click to Play";*/
+            display:block;
+            font-family: Courier;
+            font-size: 3em;
+            font-weight: bolder;
+            margin: 10px;
+            text-align:center;
         }
 
         #youLose{
@@ -96,21 +95,27 @@
             display: none;
          }
          
-        
-
-        
     </style>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  
 </head>
-<body>
+<body onload="startScreen()">
 
-<div><h1>BreakOut</h1></div>
-<div id="canvasFrame"><canvas id="myCanvas" width="480" height="320"></canvas>
+<div id="fullFrame"></div>
+
+<div id="title" style="display:none"><h1>BreakOut</h1></div>
+
+
+
+<div id="canvasFrame"><canvas id="myCanvas" width="480" height="320" style="display:none"></canvas>
     <div id="youLose">Sorry, you lose.</div>
     <div id="youWin">YOU WIN.</div>
-
 </div>
 
 
+
+<!-- ###################### THE BREAKOUT GAME ############################# -->
 <script>
     var canvas = document.getElementById("myCanvas");
     var ctx = canvas.getContext("2d");
@@ -120,23 +125,34 @@
     var dyi = -2;
     var dx = dxi;
     var dy = dyi;
-    var ballRadius = 10;
-    var paddleHeight = 30;
-    var paddleWidth = 75;
-    var paddleX = (canvas.width-paddleWidth)/2;
-    var paddleSpeed = 5;
     var rightPressed = false;
     var leftPressed = false;
     var score = 0;
     var lose = 0;
     var slam = 0;
+    var start = false;
+    //Standard blue: 0,149,221
     
-    //BALLS:
+//PADDLE #####################################################################
+    var paddleHeight = 30;
+    var paddleWidth = 75;
+    var paddleX = (canvas.width-paddleWidth)/2;
+    var paddleSpeed = 5;
+    var paddleImage = new Image(paddleWidth, paddleHeight);
+    paddleImage.src = "img/paddleBlue.png";
+    
+    
+//BALLS: #####################################################################
     var ballers = [];  //array contains each ball object
     var ballCount = 0;
-    function Ball(color){
-        this.color = color;
-        this.radius = ballRadius;
+    var ballRadius = 10;  //10
+    var ballImage = new Image(ballRadius, ballRadius);
+    ballImage.src = "img/ballBlue.png";
+
+   function Ball(){
+        // this.color = color;
+        this.img = ballImage;
+        this.radius = (ballImage.width);  //For whatever reason, the width seems to work as the radius. Is this a resolution thing??
         this.centerX = x;
         this.centerY = y;
         this.leftSide = this.centerX - this.radius;
@@ -158,15 +174,9 @@
             this.topSide = this.centerY - this.radius;
             this.bottomSide = this.centerY + this.radius;
         };
-
-        // this.bImage = new Image();
-        // this.bImage.src = 'img/soccer.png';
-        // this.bImage.onload = function(){ctx.drawImage(this.bImage,this.centerX,this.centerY);}
-
-        
     }
 
-    //BRICKS:
+//BRICKS: #####################################################################
     var brickRowCount = 3;  //3
     var brickColumnCount = 5;  //5
     var brickWidth = 75;
@@ -175,6 +185,8 @@
     var brickOffsetTop = 30;
     var brickOffsetLeft = 30;
     var bricks = [];
+    var brickImage = new Image();
+    brickImage.src = "img/brickBlue.png";
     
     for(c=0; c<brickColumnCount; c++){
         bricks[c] = [];
@@ -184,22 +196,66 @@
     }
 
 
+// GAME PLAY: #################################################################
+
+
+    function startScreen() {
+        $(document).ready(function(){
+            // $("#fullFrame").fadeTo(1000,0.4);
+        //   alert("yallo");
+            for(i=1;i<43;i++){
+                
+                $("#fullFrame").append("<div id='openingBricks' style='margin:5px 5px'></div>");   
+            }
+            
+            $("#fullFrame").append("<div><p id='clickPlay'>Press Spacebar to Play</p></div>");
+            
+            for(i=1;i<43;i++){
+                
+                $("#fullFrame").append("<div id='openingBricks' style='margin:5px 5px'></div>");   
+            }
+            
+            $(document).keydown(function(key){
+                if((key.keyCode === 0 || key.keyCode === 32) && start === false){
+                    // alert(start);
+                    $("#fullFrame").fadeOut("slow");
+                    $("#myCanvas").delay("slow").fadeIn("slow");
+                    $("#title").delay("slow").fadeIn("slow");
+                  
+                }
+            })
+            
+            $(document).keyup(function(key){
+                if((key.keyCode === 0 || key.keyCode === 32) && start === false){
+                    setTimeout(startGame(), 10000);
+                    start = true;
+                }
+            })
+        
+            
+        });
+        
+        
+        //will need to hide opening bricks and show canvas
+        // startGame();
+    }
 
     //START THE GAME:
     var running;
     function startGame() {
+        // alert("wait!");
         //drawing the board every 10 milliseconds
         addBall();
         running = setInterval(draw,10);
     }
-    startGame();
+    
 
 
 
 
     function addBall() {
         //add another ball to the array
-        ballers[ballers.length] = new Ball("#0095DD");
+        ballers[ballers.length] = new Ball();
     }
 
 
@@ -212,30 +268,40 @@
                     bricks[c][r].x = brickX;
                     bricks[c][r].y = brickY;
                     
-                    ctx.beginPath();
-                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx.fillStyle = "#0095DD";
-                    ctx.fill();
-                    ctx.closePath();
+                    ctx.drawImage(brickImage, brickX, brickY, brickWidth, brickHeight);
+                    
+                    // TO DRAW BRICKS USING CANVAS
+                    // ctx.beginPath();
+                    // ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                    // ctx.fillStyle = "#0095DD";
+                    // ctx.fill();
+                    // ctx.closePath();
                 }
             }
         }  
     }
 
+    
     function drawBall() {
-        ctx.beginPath();
-        ctx.arc(ballers[0].centerX, ballers[0].centerY, ballers[0].radius, 0, Math.PI*2);
-        ctx.fillStyle = ballers[0].color;
-        ctx.fill();
-        ctx.closePath();
+        ctx.drawImage(ballers[0].img, ballers[0].leftSide, ballers[0].topSide, ballers[0].radius*2, ballers[0].radius*2);
+        
+        // TO DRAW THE BALL USING CANVAS
+        // ctx.beginPath();
+        // ctx.arc(ballers[0].centerX, ballers[0].centerY - 20, ballers[0].radius, 0, Math.PI*2);
+        // ctx.fillStyle = ballers[0].color;
+        // ctx.fill();
+        // ctx.closePath();
     }
 
     function drawPaddle() {
-        ctx.beginPath();
-        ctx.rect(paddleX, canvas.height - paddleHeight -1, paddleWidth, paddleHeight);
-        ctx.fillStyle = "#0095DD";
-        ctx.fill();
-        ctx.closePath();
+        ctx.drawImage(paddleImage, paddleX, canvas.height - paddleHeight -1, paddleWidth, paddleHeight);
+        
+        // TO DRAW THE PADDLE USING CANVAS
+        // ctx.beginPath();
+        // ctx.rect(paddleX, canvas.height - paddleHeight -50, paddleWidth, paddleHeight);
+        // ctx.fillStyle = "#0095DD";
+        // ctx.fill();
+        // ctx.closePath();
     }
 
     function collisionDetection(){
@@ -252,16 +318,6 @@
                     if(score == brickRowCount*brickColumnCount){
                         clearInterval(running);
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
-               
-                        // ctx.beginPath();
-                        // ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
-                        // ctx.fillStyle = "#0095DD";
-                        // ctx.fill();
-                        // ctx.closePath();
-               
-                        // ctx.font = "45px Arial Black";
-                        // ctx.fillStyle = "white";
-                        // ctx.fillText("YOU WIN.", canvas.width/5 + 25, canvas.height/2 + 15);
                         document.getElementById("youWin").style.display = "block";
                         // document.location.reload();
                     }
@@ -323,22 +379,6 @@
         // alert("Sorry, you lose.");
         clearInterval(running);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    //YOU LOSE WITH CANVAS DRAW//
-        // ctx.beginPath();
-        // ctx.rect(canvas.width/5, canvas.height*(1/3), canvas.width*(3/5), canvas.height*(1/3));
-        // ctx.fillStyle = "#0095DD";
-        // ctx.fill();
-        // ctx.closePath();
-       
-        // ctx.font = "30px Arial Black";
-        // ctx.fillStyle = "white";
-        // ctx.fillText("Sorry, you lose.", canvas.width/5 + 18, canvas.height/2 + 10);
-
-    //YOU LOSE WITH HTML ELEMENT//
-        // document.getElementById("youLose").style.position = "relative";
-        // document.getElementById("youLose").style.left = "114px";
-        // document.getElementById("youLose").style.top = "0px";
         document.getElementById("youLose").style.display = "block";
 
    }
